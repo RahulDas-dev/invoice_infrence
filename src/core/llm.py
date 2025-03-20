@@ -1,66 +1,53 @@
-import copy
 import logging
 import re
 from pathlib import Path
+from string import Template
+from typing import Any, Dict, Tuple
 
-import boto3
+from pydantic_ai import Agent, BinaryContent, ModelRetry
+from pydantic_ai.models.bedrock import BedrockConverseModel
+from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.providers.bedrock import BedrockProvider
 
-from .perser import extract_xml_from_text, parse_invoice
-from .prompts import SYSTEM_MESSAGE_1, SYSTEM_MESSAGE_2
-from .utility import get_secret_keys
+from .prompts import SYSTEM_MESSAGE_1, SYSTEM_MESSAGE_2, USER_MESSAGE_1
+from .schemas import Invoice, InvoiceData
+from .utility import get_secret_keys, image_to_byte_string
 
 logger = logging.getLogger(__name__)
 
 
-class SinglePageAgent:
-    def __init__(self, retry_limit: int = 3):
-        self.MODEL_ID = "us.meta.llama3-2-90b-instruct-v1:0"
-        self.runtime = boto3.client("bedrock-runtime", **get_secret_keys())
-        self.retry_limit = retry_limit
-
-    def run(self, image_name: Path) -> dict:
-        with open(image_name, "rb") as f:
-            image = f.read()
-
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {"image": {"format": "png", "source": {"bytes": image}}},
-                    {"text": SYSTEM_MESSAGE_1},
-                ],
-            },
-        ]
-        retry_count = self.retry_limit
-        invoce_data = {}
-        while retry_count > 0:
-            response = self.runtime.converse(
-                modelId=self.MODEL_ID, messages=messages, inferenceConfig={"maxTokens": 8192}
-            )
-            response_text = response["output"]["message"]["content"][0]["text"]
-            logger.info(f"Retry Count: {retry_count}, LLM Response : {response_text}")
-            invoce_data = self._process_invoice(response_text)
-            if invoce_data:
-                invoce_data["page_no"] = 1
-                break
-            retry_count -= 1
-        return {"invoice": [invoce_data]}
-
-    def _process_invoice(self, raw_text: str) -> dict:
-        """Process full text to extract invoice data and additional details."""
-        xml_data = extract_xml_from_text(raw_text)
-        if xml_data is None:
-            return {}
-        if xml_data.lower() == "no_invoice":
-            return {}
-        return parse_invoice(xml_data)
+page_template = Template("""
+                        Page No $page_no
+$page_content
+""")
 
 
 class MultiPageAgent:
-    def __init__(self, retry_limit: int = 3):
-        self.MODEL_ID = "us.meta.llama3-2-90b-instruct-v1:0"
-        self.runtime = boto3.client("bedrock-runtime", **get_secret_keys())
-        self.retry_limit = retry_limit
+    def __init__(self):
+        self._agent1 = Agent(
+            model=BedrockConverseModel(
+                model_name="us.meta.llama3-2-90b-instruct-v1:0",
+                provider=BedrockProvider(**get_secret_keys()),
+            ),
+            system_prompt=SYSTEM_MESSAGE_1,
+            result_type=str,
+            model_settings={"temperature": 0},
+        )
+
+        agent2 = Agent(
+            model=OpenAIModel("gpt-4o"),
+            system_prompt=SYSTEM_MESSAGE_2,
+            result_type=Invoice,
+            model_settings={"temperature": 0},
+        )
+
+        @agent2.result_validator
+        async def validate_result(result: Any) -> Any:
+            if isinstance(result, Invoice):
+                return result
+            return ModelRetry("Final result Format is not Correct ")
+
+        self._agent2 = agent2
 
     def sorted_images(self, image_dir: Path) -> list[Path]:
         """Returns a list of PNG files sorted by page number."""
@@ -73,47 +60,24 @@ class MultiPageAgent:
 
         return sorted(image_files, key=extract_page_num)
 
-    def run(self, image_dir: Path) -> dict:
-        item_list = []
-        messages = []
-        page_no = 0
+    def run(self, image_dir: Path) -> Tuple[Dict[str, Any], str]:
+        pdf_content, page_no = [], 0
         for file in self.sorted_images(image_dir):
             page_no += 1
-            logger.info(f"Processing Page : {file.resolve()}")
-            response_text = self._process_page(file.resolve(), messages)
-            if response_text not in [None, "NO_INVOICE", "NEXT_PAGE"]:
-                invoice_data = self._process_invoice(copy.deepcopy(response_text))
-                if invoice_data not in [None, "NO_INVOICE", "NEXT_PAGE"]:
-                    invoice_data["page_no"] = page_no
-                    item_list.append(invoice_data)
-                messages = []
-            else:
-                messages.append({"role": "assistant", "content": response_text})
-        return {"invoice": item_list}
-
-    def _process_page(self, image_name: Path, messages: list) -> str:
-        with open(image_name, "rb") as f:
-            image = f.read()
-
-        messages.append(
-            {
-                "role": "user",
-                "content": [
-                    {"image": {"format": "png", "source": {"bytes": image}}},
-                    {"text": SYSTEM_MESSAGE_2},
-                ],
-            }
-        )
-        response = self.runtime.converse(modelId=self.MODEL_ID, messages=messages, inferenceConfig={"maxTokens": 8192})
-        return response["output"]["message"]["content"][0]["text"]
-
-    def _process_invoice(self, raw_text: str) -> dict | str | None:
-        """Process full text to extract invoice data and additional details."""
-        xml_data = extract_xml_from_text(raw_text)
-        if xml_data is None:
-            return None
-        if xml_data.lower() == "no_invoice":
-            return "NO_INVOICE"
-        if xml_data.lower() == "next_page":
-            return "NEXT_PAGE"
-        return parse_invoice(xml_data)
+            logger.info(f"Agent1 Processing Page : {file.name}")
+            img_byte, mimetype = image_to_byte_string(file.resolve())
+            input_msg = [
+                USER_MESSAGE_1,
+                BinaryContent(data=img_byte, media_type=mimetype),
+            ]
+            result1 = self._agent1.run_sync(input_msg)
+            pdf_content.append((page_no, page_template.substitute(page_no=page_no, page_content=result1.data)))
+        logger.info(f"Agent1 has completed the processing of {page_no} pages")
+        final_result = []
+        for p_no, content in pdf_content:
+            logger.info(f"Agent2 Processing Page No : {p_no}")
+            result2 = self._agent2.run_sync([content])
+            if isinstance(result2.data, Invoice):
+                final_result.append(result2.data)
+        invoice_data = InvoiceData(details=final_result)
+        return invoice_data.model_dump(), "\n".join(item for _, item in pdf_content)

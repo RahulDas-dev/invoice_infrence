@@ -9,7 +9,6 @@ from configs import app_config
 
 def _register_extensions(app: InvoiceInferApp, bebug: bool = False) -> None:
     from src.extensions import (
-        DatabaseExtension,
         HealthExtension,
         LifespanExtension,
         LoadEnvExtension,
@@ -24,7 +23,6 @@ def _register_extensions(app: InvoiceInferApp, bebug: bool = False) -> None:
         WarningExtension,
         LoggingExtension,
         WerkzeugExtension,
-        DatabaseExtension,
         LifespanExtension,
         HealthExtension,
         LoadEnvExtension,

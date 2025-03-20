@@ -45,7 +45,7 @@ class HealthExtension(BaseExtension):
                 content_type="application/json",
             )
 
-        @app.route("/db-pool-info")
+        """ @app.route("/db-pool-info")
         def get_dbpool_info() -> Response:
             from .db_extn import db
 
@@ -63,4 +63,4 @@ class HealthExtension(BaseExtension):
                 ),
                 status=200,
                 content_type="application/json",
-            )
+            ) """

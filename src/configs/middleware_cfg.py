@@ -98,7 +98,7 @@ class DatabaseConfig(BaseSettings):
             port=port_,
             database=self.DB_DATABASE,
             query={},  # type: ignore
-        ).render_as_string(hide_password=True)
+        ).render_as_string(hide_password=False)
 
 
 class LoggingConfig(BaseSettings):

@@ -1,4 +1,3 @@
-from .db_extn import DatabaseExtension
 from .health_extn import HealthExtension
 from .lifespan_extn import LifespanExtension
 from .loadenv_extn import LoadEnvExtension
@@ -8,7 +7,6 @@ from .warning_extn import WarningExtension
 from .werkzeug_exten import WerkzeugExtension
 
 __all__ = (
-    "DatabaseExtension",
     "HealthExtension",
     "LifespanExtension",
     "LoadEnvExtension",
