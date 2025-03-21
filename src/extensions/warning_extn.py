@@ -12,7 +12,7 @@ class WarningExtension(BaseExtension):
     def register(cls, app: InvoiceInferApp) -> None:  # noqa: ARG003
         import warnings
 
-        import nest_asyncio
+        # import nest_asyncio
 
         warnings.simplefilter("ignore", ResourceWarning)
-        nest_asyncio.apply()
+        # nest_asyncio.apply()

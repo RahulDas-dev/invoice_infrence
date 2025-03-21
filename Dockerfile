@@ -1,7 +1,7 @@
 FROM python:3.11
 
-RUN apt update && apt upgrade -y
-RUN apt install -y poppler-utils
+#RUN apt update && apt upgrade -y
+#RUN apt install -y poppler-utils
 
 COPY src /app/src
 COPY run_app.py /app/run_app.py

@@ -52,6 +52,8 @@ class LoggingExtension(BaseExtension):
         sh.addFilter(RequestIdFilter())
         log_handlers.append(sh)
 
+        logging.getLogger("requests").setLevel(logging.WARNING)
+        logging.getLogger("httpx").setLevel(logging.WARNING)
         logging.basicConfig(
             level=app.config.get("LOG_LEVEL", logging.INFO),
             format=app.config.get("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s"),

@@ -1,12 +1,11 @@
-import os
 import sys
 
 sys.path.append("src")
 
-if os.environ.get("FLASK_DEBUG", "0") in [0, "0", "False", "flase"]:
-    from gevent import monkey
+# if os.environ.get("FLASK_DEBUG", "0") in [0, "0", "False", "flase"]:
+#    from gevent import monkey
 
-    monkey.patch_all()
+#    monkey.patch_all()
 
 from src.create_app import create_application
 
