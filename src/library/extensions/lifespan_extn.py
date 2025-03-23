@@ -1,14 +1,14 @@
-from flask import Response
+from typing import Optional
 
-from app import InvoiceInferApp
-
-# from library import UniqueIdGenerator
-from .base import BaseExtension
+from flask import Flask, Response
 
 
-class LifespanExtension(BaseExtension):
-    @classmethod
-    def register(cls, app: InvoiceInferApp) -> None:
+class LifespanExtension:
+    def __init__(self, app: Optional[Flask] = None):
+        if app is not None:
+            self.init_app(app)
+
+    def init_app(self, app: Flask) -> None:
         # @app.before_request
         # def before_request() -> None:
         #    UniqueIdGenerator.increment_thread_recycles()
@@ -20,3 +20,6 @@ class LifespanExtension(BaseExtension):
             response.headers.add("X-Timezn", app.config.get("TIMEZONE"))
             response.headers.add("X-Language", app.config.get("LANGUAGE"))
             return response
+
+
+lifespan_extn = LifespanExtension()

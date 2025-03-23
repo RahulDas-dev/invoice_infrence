@@ -1,8 +1,9 @@
 from pydantic_settings import SettingsConfigDict
 
-from .deployment_cfg import DeploymentConfig
-from .feature_cfg import FeatureConfig
-from .middleware_cfg import DatabaseConfig, LoggingConfig
+from .db_conf import DatabaseConfig
+from .deployment_conf import DeploymentConfig
+from .feature_conf import FeatureConfig
+from .log_conf import LoggingConfig
 
 
 class InvoiceInferConfig(DeploymentConfig, LoggingConfig, DatabaseConfig, FeatureConfig):

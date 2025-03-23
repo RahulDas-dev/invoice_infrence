@@ -1,10 +1,12 @@
 from flask_restx import Api
 
+from configs import app_config
+
 from .process import ns as process_ns
 
 api = Api(
     title="Process Document API",
-    version="1.0.0",
+    version=app_config.API_VERSION,
     description="Process Uploaded Document Extracts Invoice Information",
     doc="/docs/",
 )
