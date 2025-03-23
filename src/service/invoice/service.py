@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Tuple
+from typing import Any, ClassVar, Tuple
 
 from flask import Flask
 from pydantic_ai import Agent, BinaryContent, ModelRetry
@@ -34,10 +34,13 @@ class InvoiceService:
     config: ClassVar[InvoiceSeviceConfig]
 
     @classmethod
-    @classmethod
     def configure_from_app(cls, app: Flask) -> None:
         config_ = InvoiceSeviceConfig.init_from_app(app)
-        cls.config = config_
+        cls.set_config(config_)
+
+    @classmethod
+    def set_config(cls, config: InvoiceSeviceConfig) -> None:
+        cls.config = config
 
     @classmethod
     def setup_agents(cls) -> Tuple[Agent[None, str], Agent[None, Invoice]]:
@@ -67,7 +70,7 @@ class InvoiceService:
         return agent1, agent2
 
     @classmethod
-    def run(cls, image_dir: Path) -> Tuple[Dict[str, Any], str]:
+    def run(cls, image_dir: str | Path) -> Tuple[InvoiceData, str]:
         agent1, agent2 = cls.setup_agents()
         pdf_content, page_no = [], 0
         for file in sorted_images(image_dir):
@@ -88,4 +91,4 @@ class InvoiceService:
             if isinstance(result2.data, Invoice):
                 final_result.append(result2.data)
         invoice_data = InvoiceData(details=final_result)
-        return invoice_data.model_dump(), "\n".join(item for _, item in pdf_content)
+        return invoice_data, "\n".join(item for _, item in pdf_content)

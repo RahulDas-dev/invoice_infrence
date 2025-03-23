@@ -23,9 +23,9 @@ def image_to_byte_string(image_path: str | Path) -> Tuple[bytes, str]:
     return img_byte_arr, image.get_format_mimetype() or "image/png"
 
 
-def sorted_images(image_dir: Path) -> list[Path]:
+def sorted_images(image_dir: str | Path) -> list[Path]:
     """Returns a list of PNG files sorted by page number."""
-    image_files = list(image_dir.rglob("*.png"))
+    image_files = list(Path(image_dir).rglob("*.png"))
 
     # Regex to extract page number
     def extract_page_num(file: Path) -> int:

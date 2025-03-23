@@ -96,4 +96,4 @@ class Upload(Resource):
                 args=[self],
                 kwargs={"file_paths": [uploaded_file, image_directory]},
             ).start()
-        return data, 201
+        return data.model_dump(), 201

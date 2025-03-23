@@ -21,7 +21,8 @@ if __name__ == "__main__":
         # from gevent.pywsgi import WSGIServer
 
         # WSGIServer(("127.0.0.1", 5001), app).serve_forever()
-        print("Use - waitress-serve --listen=127.0.0.1:5001 app:app")  # noqa: T201
+        print("waitress-serve --listen=127.0.0.1:5001 app:app")  # noqa: T201
+        print("OR")  # noqa: T201
         print("""gunicorn
         --bind "${DIFY_BIND_ADDRESS:-0.0.0.0}:${DIFY_PORT:-5001}"
         --workers ${SERVER_WORKER_AMOUNT:-1}

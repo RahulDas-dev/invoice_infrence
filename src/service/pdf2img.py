@@ -40,7 +40,11 @@ class Pdf2ImgService:
     @classmethod
     def configure_from_app(cls, app: Flask) -> None:
         config_ = Pdf2ImgConfig.init_from_app(app)
-        cls.config = config_
+        cls.set_config(config_)
+
+    @classmethod
+    def set_config(cls, config: Pdf2ImgConfig) -> None:
+        cls.config = config
 
     @classmethod
     def _convert_to_image(cls, output_folder: Path, pdf_path: str | Path, fmt: str = "png") -> None:
