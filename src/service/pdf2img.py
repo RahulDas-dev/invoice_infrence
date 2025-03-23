@@ -22,7 +22,7 @@ class Pdf2ImgConfig:
     @classmethod
     def init_from_app(cls, app: Flask) -> "Pdf2ImgConfig":
         with app.app_context():
-            poppler_path_ = app.config.get("PROPELLER_PATH", "")
+            poppler_path_ = app.config.get("POPPLER_PATH", None)
             output_path_ = app.config.get("UPLOADS_DEFAULT_DEST", "")
             output_path_ = Path(output_path_) / Path("pdf2img")
             if not output_path_.exists():

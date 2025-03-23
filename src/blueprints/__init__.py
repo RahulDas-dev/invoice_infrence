@@ -5,7 +5,7 @@ from configs import app_config
 from .process import ns as process_ns
 
 api = Api(
-    title="Process Document API",
+    title=app_config.APPLICATION_NAME,
     version=app_config.API_VERSION,
     description="Process Uploaded Document Extracts Invoice Information",
     doc="/docs/",
