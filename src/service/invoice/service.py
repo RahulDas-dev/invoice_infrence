@@ -40,7 +40,7 @@ class InvoiceService:
         cls.config = config_
 
     @classmethod
-    def setup_agents(cls) -> Tuple[Agent, ...]:
+    def setup_agents(cls) -> Tuple[Agent[None, str], Agent[None, Invoice]]:
         agent1 = Agent(
             model=BedrockConverseModel(
                 model_name=cls.config.model1_name,
@@ -64,7 +64,7 @@ class InvoiceService:
                 return result
             return ModelRetry("Final result Format is not Correct ")
 
-        return agent1, agent2  # type: ignore
+        return agent1, agent2
 
     @classmethod
     def run(cls, image_dir: Path) -> Tuple[Dict[str, Any], str]:

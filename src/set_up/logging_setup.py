@@ -1,4 +1,4 @@
-from app import InvoiceInferApp
+from application import InvoiceInferApp
 from library.extensions import logging_extn
 
 

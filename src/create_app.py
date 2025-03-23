@@ -2,7 +2,7 @@
 import logging
 import time
 
-from app import InvoiceInferApp
+from application import InvoiceInferApp
 from configs import app_config
 
 

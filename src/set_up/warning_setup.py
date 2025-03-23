@@ -1,4 +1,4 @@
-from app import InvoiceInferApp
+from application import InvoiceInferApp
 
 
 def register_app(app: InvoiceInferApp) -> None:

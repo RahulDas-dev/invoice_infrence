@@ -53,21 +53,25 @@ class Pdf2ImgService:
     @classmethod
     def _resize_and_save(cls, image: Image, save_path: str | Path, fmt: str = "png") -> None:
         width, height = image.size
+        if fmt == "png":
+            save_format_ = "PNG"
+        else:
+            abort(403, description=f"File format {fmt} not suported")
         logger.info(f"Processing Images of shape {width}, {height}")
         if width < height and height > cls.config.max_height:
             new_height = cls.config.max_height
             new_width = int(new_height * (width / height))
             new_image = image.resize((new_width, new_height))
             logger.info(f"Resized Images to shape {new_image.size}")
-            new_image.save(save_path, "PNG")
+            new_image.save(save_path, save_format_)
         elif width > height and width > cls.config.max_width:
             new_width = cls.config.max_width
             new_height = int(new_width * (height / width))
             new_image = image.resize((new_width, new_height))
             logger.info(f"Resized Images to shape {new_image.size}")
-            new_image.save(save_path, "PNG")
+            new_image.save(save_path, save_format_)
         else:
-            image.save(save_path, "PNG")
+            image.save(save_path, save_format_)
 
     @classmethod
     def convert(cls, pdf_path: str | Path) -> Path:

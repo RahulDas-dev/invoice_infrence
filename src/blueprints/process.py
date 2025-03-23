@@ -84,9 +84,9 @@ class Upload(Resource):
         if document is None or not isinstance(document, FileStorage) or document.filename is None:
             return abort(HTTPStatus.BAD_REQUEST, "Invalid File Object")
         uploaded_file = pdf_loader.save(document)
-        ns.logger.info(f"Uploaded files {uploaded_file!s} ...")
+        ns.logger.info(f"Uploaded files {uploaded_file.name!s} ...")
         image_directory = Pdf2ImgService.convert(uploaded_file)
-        ns.logger.info(f"Converted to Images {image_directory!s} ...")
+        ns.logger.info(f"Converted to Images {image_directory.name!s} ...")
         data, dadta_str = InvoiceService.run(image_directory)
         ns.logger.info("Agents Complited Extraction ...")
         if current_app.config.get("CLEANUP_TEMP_FILES", False):

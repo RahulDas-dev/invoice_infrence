@@ -3,6 +3,7 @@ from typing import Any
 from pydantic import Field, NonNegativeInt, PositiveInt, computed_field
 from pydantic_settings import BaseSettings
 from sqlalchemy import URL
+from sqlalchemy.util import immutabledict
 
 
 class DatabaseConfig(BaseSettings):
@@ -34,6 +35,11 @@ class DatabaseConfig(BaseSettings):
     DB_TYPE: str = Field(
         description="Database URI scheme for SQLAlchemy connection.",
         default="postgresql",
+    )
+
+    DB_CHARSET: str = Field(
+        description="Character set for database connection.",
+        default="",
     )
 
     SQLALCHEMY_POOL_SIZE: NonNegativeInt = Field(
@@ -77,6 +83,10 @@ class DatabaseConfig(BaseSettings):
             return "sqlite+pysqlite"
         raise ValueError("DataBase not Supported")
 
+    @property
+    def query(self) -> immutabledict:
+        return immutabledict({"client_encoding": self.DB_CHARSET}) if self.DB_CHARSET else immutabledict({})
+
     @computed_field
     def SQLALCHEMY_ENGINE_OPTIONS(self) -> dict[str, Any]:  # noqa: N802
         if self.is_sqlite:
@@ -103,5 +113,5 @@ class DatabaseConfig(BaseSettings):
             host=host_,
             port=port_,
             database=self.DB_DATABASE,
-            query={},  # type: ignore
+            query=self.query,
         ).render_as_string(hide_password=False)
